@@ -24,6 +24,12 @@ module.exports = withStoreConfig({
         protocol: "https",
         hostname: "medusa-server-testing.s3.amazonaws.com",
       },
+      
+      {
+        protocol: "https",
+        hostname: "m.media-amazon.com",
+      },
+      
     ],
   },
 })

@@ -42,7 +42,7 @@ const PaymentStripe: React.FC = () => {
   )
 }
 
-const CardNumber = ({
+export const CardNumber = ({
   options,
 }: {
   options: StripeCardNumberElementOptions

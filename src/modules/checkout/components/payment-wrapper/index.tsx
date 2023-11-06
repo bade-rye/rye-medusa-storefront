@@ -12,21 +12,13 @@ const Wrapper: React.FC<WrapperProps> = ({ paymentSession, children }) => {
     return <div>{children}</div>
   }
 
-  switch (paymentSession.provider_id) {
-    case "stripe":
-      return (
-        <StripeWrapper paymentSession={paymentSession}>
-          {children}
-        </StripeWrapper>
-      )
-
-    default:
-      return <div>{children}</div>
-  }
+  return (
+    <StripeWrapper paymentSession={paymentSession}>{children}</StripeWrapper>
+  )
 }
 
-const stripeKey = process.env.NEXT_PUBLIC_STRIPE_KEY
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_KEY || "fake-key"
+const stripePromise = loadStripe(stripeKey ?? "fake-key")
 
 const StripeWrapper: React.FC<WrapperProps> = ({
   paymentSession,

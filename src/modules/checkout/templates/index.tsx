@@ -5,6 +5,7 @@ import Link from "next/link"
 import CheckoutLoader from "../components/checkout-loader"
 import CheckoutForm from "./checkout-form"
 import CheckoutSummary from "./checkout-summary"
+import { PaymentDetailProvider } from "@lib/context/use-payment-details"
 
 const CheckoutTemplate = () => {
   return (
@@ -33,8 +34,12 @@ const CheckoutTemplate = () => {
         <div className="relative">
           <CheckoutLoader />
           <div className="grid grid-cols-1 small:grid-cols-[1fr_416px] gap-y-8 content-container gap-x-8 py-12">
-            <CheckoutForm />
-            <CheckoutSummary />
+            <PaymentDetailProvider>
+              <>
+                <CheckoutForm />
+                <CheckoutSummary />
+              </>
+            </PaymentDetailProvider>
           </div>
         </div>
         <div className="py-4 w-full flex items-center justify-center">

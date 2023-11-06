@@ -1,5 +1,6 @@
 "use client"
 
+import { ryePay } from "@lib/util/ryePay"
 import Addresses from "@modules/checkout/components/addresses"
 import Payment from "@modules/checkout/components/payment"
 import Shipping from "@modules/checkout/components/shipping"

@@ -422,3 +422,12 @@ export async function getProductsByCategoryHandle({
     nextPage,
   }
 }
+
+export const createRyeCart = async (body: unknown) => {
+  const cart = await fetch(`${API_BASE_URL}/api/rye/carts/create`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  }).then((res) => res.json())
+
+  return cart
+}

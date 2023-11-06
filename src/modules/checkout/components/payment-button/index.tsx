@@ -1,4 +1,7 @@
 import { useCheckout } from "@lib/context/checkout-context"
+import { createRyeCart } from "@lib/data"
+import usePaymentDetails from "@lib/context/use-payment-details"
+import { ryePay } from "@lib/util/ryePay"
 import { PaymentSession } from "@medusajs/medusa"
 import Button from "@modules/common/components/button"
 import Spinner from "@modules/common/icons/spinner"
@@ -6,7 +9,7 @@ import { OnApproveActions, OnApproveData } from "@paypal/paypal-js"
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js"
 import { useElements, useStripe } from "@stripe/react-stripe-js"
 import { useCart } from "medusa-react"
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 
 type PaymentButtonProps = {
   paymentSession?: PaymentSession | null
@@ -221,16 +224,120 @@ const PayPalPaymentButton = ({
 }
 
 const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
+  const { cart } = useCart()
+  const { month, year } = usePaymentDetails()
+
   const [submitting, setSubmitting] = useState(false)
 
   const { onPaymentCompleted } = useCheckout()
 
-  const handlePayment = () => {
+  const loadSpreedly = useCallback(() => {
+    ryePay.init({
+      apiKey: window
+        .atob("UllFLTAyZjU4YzZlMjdiYTQwZjZhMzZjOg==")
+        .replaceAll(":", ""),
+      numberEl: "spreedly-number",
+      cvvEl: "spreedly-cvv",
+      environment: "prod",
+      onReady: () => {
+        // Customize card number field and cvv field
+        ryePay.setStyle(
+          "number",
+          "font-size: 14px;display:block;width:100%;border-radius:1px;border:1px solid #ccc;background-color:#fff;padding:14px;box-sizing:border-box;"
+        )
+        ryePay.setStyle(
+          "cvv",
+          "font-size: 14px;display:block;width:100%;border-radius:1px;border:1px solid #ccc;background-color:#fff;padding:14px;box-sizing:border-box;"
+        )
+        ryePay.setPlaceholder("number", "Card number")
+        ryePay.setPlaceholder("cvv", "CVV")
+      },
+      onCartSubmitted: (submitCartResults, errors) => {
+        if (
+          (errors && errors.length > 0) ||
+          (submitCartResults?.errors && submitCartResults.errors.length > 0)
+        ) {
+          console.log(errors)
+        } else {
+          onPaymentCompleted()
+        }
+        setSubmitting(false)
+      },
+      onErrors: (errors: any[]) => {
+        for (const { key, message, attribute } of errors) {
+          console.log(`new error: ${key}-${message}-${attribute}`)
+        }
+        setSubmitting(false)
+      },
+      enableLogging: true,
+      onIFrameError: (err: unknown) => {
+        console.log(`frameError: ${JSON.stringify(err)}`)
+        setSubmitting(false)
+      },
+    })
+  }, [onPaymentCompleted])
+
+  useEffect(() => {
+    loadSpreedly()
+  }, [])
+
+  const handlePayment = async () => {
+    if (!cart) {
+      return
+    }
+
     setSubmitting(true)
+    const ryeCartItems = cart.items.map((item) => {
+      return {
+        productId: item.variant.metadata?.marketplaceId,
+        quantity: item.quantity,
+        marketplace: item.variant.metadata?.marketplace,
+      }
+    })
+    const buyerIdentity = {
+      firstName: cart.shipping_address?.first_name,
+      lastName: cart.shipping_address?.last_name,
+      email: cart.email,
+      phone: cart.billing_address?.phone,
+      address1: cart.shipping_address?.address_1,
+      address2: cart.shipping_address?.address_2,
+      city: cart.shipping_address?.city,
+      provinceCode: cart.shipping_address?.province,
+      countryCode: cart.shipping_address?.country_code?.toUpperCase(),
+      postalCode: cart.shipping_address?.postal_code,
+    }
 
-    onPaymentCompleted()
+    const ryeCart = await createRyeCart({ items: ryeCartItems, buyerIdentity })
+    const response = await fetch("https://api.ipify.org?format=json").then(
+      (res) => res.json()
+    )
 
-    setSubmitting(false)
+    ryePay.submit({
+      first_name: cart.shipping_address?.first_name ?? "",
+      last_name: cart.shipping_address?.last_name ?? "",
+      month,
+      year,
+      phone_number: cart.billing_address?.phone ?? "",
+      cartId: ryeCart.id, // IMPORTANT! Make sure the cartId is valid
+      address1: cart.shipping_address?.address_1 ?? "",
+      address2: cart.shipping_address?.address_2 ?? "",
+      zip: cart.shipping_address?.postal_code ?? "",
+      city: cart.shipping_address?.city ?? "",
+      country: cart.shipping_address?.country_code?.toUpperCase() ?? "",
+      state: cart.shipping_address?.province ?? "",
+      selectedShippingOptions: [
+        { store: "amazon", shippingId: "6.99-Default shipping method" },
+      ], // default shipping method rye uses,
+      shopperIp: response.ip,
+    })
+
+    console.log(ryeCart)
+
+    // setSubmitting(true)
+
+    // onPaymentCompleted()
+
+    // setSubmitting(false)
   }
 
   return (

@@ -5,6 +5,7 @@ import ChevronDown from "@modules/common/icons/chevron-down"
 import Search from "@modules/common/icons/search"
 import X from "@modules/common/icons/x"
 import { useCollections, useMeCustomer } from "medusa-react"
+import Image from "next/image"
 import Link from "next/link"
 import ReactCountryFlag from "react-country-flag"
 
@@ -36,7 +37,9 @@ const MainMenu = () => {
           </button>
         </div>
         <div>
-          <h1 className="text-xl-semi uppercase">Acme</h1>
+          <h1 className="text-xl-semi uppercase">
+            <Image src="/logo.svg" alt="" width={100} height={100} />
+          </h1>
         </div>
         <div className="flex-1 basis-0 flex justify-end">
           <button onClick={close}>

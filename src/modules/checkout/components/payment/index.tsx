@@ -12,27 +12,6 @@ const Payment = () => {
     sameAsBilling: { state: isSame },
   } = useCheckout()
 
-  /**
-   * Fallback if the payment session are not loaded properly we
-   * retry to load them after a 5 second delay.
-   */
-  useEffect(() => {
-    let timeout: NodeJS.Timeout | null = null
-
-    if (cart?.shipping_address && cart?.payment_sessions) {
-      timeout = setTimeout(() => {
-        initPayment()
-      }, 5000)
-    }
-
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout)
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart])
-
   return (
     <StepContainer
       title="Payment"

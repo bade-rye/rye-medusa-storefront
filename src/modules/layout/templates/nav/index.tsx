@@ -7,6 +7,7 @@ import DropdownMenu from "@modules/layout/components/dropdown-menu"
 import MobileMenu from "@modules/mobile-menu/templates"
 import DesktopSearchModal from "@modules/search/templates/desktop-search-modal"
 import clsx from "clsx"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -74,7 +75,7 @@ const Nav = () => {
 
           <div className="flex items-center h-full">
             <Link href="/" className="text-xl-semi uppercase">
-              Acme
+              <Image src="/logo.svg" alt="" width={100} height={100} />
             </Link>
           </div>
 

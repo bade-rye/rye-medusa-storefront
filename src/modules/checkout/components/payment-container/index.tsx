@@ -36,8 +36,6 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
   setSelected,
   disabled = false,
 }) => {
-  const { setMonth, setYear } = usePaymentDetails()
-
   return (
     <div
       className={clsx(

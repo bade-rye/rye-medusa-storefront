@@ -234,7 +234,7 @@ const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
   const loadSpreedly = useCallback(() => {
     ryePay.init({
       apiKey: window
-        .atob("UllFLTAyZjU4YzZlMjdiYTQwZjZhMzZjOg==")
+        .atob(process.env.NEXT_RYE_PAY_TOKEN ?? "")
         .replaceAll(":", ""),
       numberEl: "spreedly-number",
       cvvEl: "spreedly-cvv",

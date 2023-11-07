@@ -1,6 +1,5 @@
 import { useCheckout } from "@lib/context/checkout-context"
 import Spinner from "@modules/common/icons/spinner"
-import { useEffect } from "react"
 import PaymentContainer from "../payment-container"
 import StepContainer from "../step-container"
 
@@ -8,7 +7,6 @@ const Payment = () => {
   const {
     cart,
     setPaymentSession,
-    initPayment,
     sameAsBilling: { state: isSame },
   } = useCheckout()
 

@@ -5,7 +5,8 @@ import Link from "next/link"
 import CheckoutLoader from "../components/checkout-loader"
 import CheckoutForm from "./checkout-form"
 import CheckoutSummary from "./checkout-summary"
-import { PaymentDetailProvider } from "@lib/context/use-payment-details"
+import { RyePayProvider } from "@lib/context/ryepay-context"
+import Image from "next/image"
 
 const CheckoutTemplate = () => {
   return (
@@ -26,7 +27,7 @@ const CheckoutTemplate = () => {
               </>
             </Link>
             <Link href="/" className="text-xl-semi">
-              ACME
+              <Image src="/logo.svg" alt="" width={100} height={100} />
             </Link>
             <div className="flex-1 basis-0" />
           </nav>
@@ -34,12 +35,10 @@ const CheckoutTemplate = () => {
         <div className="relative">
           <CheckoutLoader />
           <div className="grid grid-cols-1 small:grid-cols-[1fr_416px] gap-y-8 content-container gap-x-8 py-12">
-            <PaymentDetailProvider>
-              <>
-                <CheckoutForm />
-                <CheckoutSummary />
-              </>
-            </PaymentDetailProvider>
+            <RyePayProvider>
+              <CheckoutForm />
+              <CheckoutSummary />
+            </RyePayProvider>
           </div>
         </div>
         <div className="py-4 w-full flex items-center justify-center">

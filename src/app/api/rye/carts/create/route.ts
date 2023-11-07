@@ -1,8 +1,5 @@
-import { AdminProductsRes, ProductStatus } from "@medusajs/medusa"
 import { CREATE_RYE_CART } from "../queries"
-import { medusaClient, ryeClient } from "../../clients"
-import { AnyVariables, OperationResult } from "@urql/core"
-import { ResponsePromise } from "@medusajs/medusa-js"
+import { ryeClient } from "../../clients"
 import { NextRequest, NextResponse } from "next/server"
 
 type BuyerIdentity = {
@@ -34,7 +31,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const items = body.items as RyeItem[]
     const buyerIdentity = body.buyerIdentity as BuyerIdentity
-    console.log(items)
 
     const cartItems = {
       amazonCartItemsInput: items.reduce((acc: AmazonRyeItemInput[], curr) => {

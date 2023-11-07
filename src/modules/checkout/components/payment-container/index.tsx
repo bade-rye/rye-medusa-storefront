@@ -1,8 +1,9 @@
-import usePaymentDetails from "@lib/context/use-payment-details"
 import { PaymentSession } from "@medusajs/medusa"
 import Radio from "@modules/common/components/radio"
 import clsx from "clsx"
 import React from "react"
+import PaymentStripe from "../payment-stripe"
+import PaymentRye from "../payment-rye"
 
 type PaymentContainerProps = {
   paymentSession: PaymentSession
@@ -60,7 +61,7 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
           </span>
           {selected && (
             <div className="w-full mt-4">
-              <PaymentElement />
+              <PaymentElement paymentSession={paymentSession} />
             </div>
           )}
         </div>
@@ -69,68 +70,27 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
   )
 }
 
-const PaymentElement = () => {
-  const { month, year, setMonth, setYear } = usePaymentDetails()
-  return (
-    <div
-      className="pt-8 pr-7"
-      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-    >
-      <div id="spreedly-number" style={{ height: "46px" }} />
-      <div style={{ display: "flex", gap: "16px" }}>
-        <input
-          value={month}
-          onChange={(e) => {
-            setMonth?.(e.target.value)
-          }}
-          placeholder="MM"
-          inputMode="numeric"
-          maxLength={2}
-          minLength={2}
-          style={{
-            display: "block",
-            width: "50%",
-            borderRadius: "1px",
-            border: "1px solid #ccc",
-            backgroundColor: "#fff",
-            padding: "10px",
-            fontSize: "14px",
-            textAlign: "start",
-            lineHeight: "24px",
-            boxSizing: "border-box",
-            color: "#000",
-            outline: "none",
-          }}
-        />
-
-        <input
-          placeholder="YYYY"
-          value={year}
-          onChange={(e) => {
-            setYear?.(e.target.value)
-          }}
-          inputMode="numeric"
-          maxLength={4}
-          minLength={4}
-          style={{
-            display: "block",
-            width: "50%",
-            borderRadius: "1px",
-            border: "1px solid #ccc",
-            backgroundColor: "#fff",
-            padding: "10px",
-            fontSize: "14px",
-            textAlign: "start",
-            lineHeight: "24px",
-            boxSizing: "border-box",
-            color: "#000",
-            outline: "none",
-          }}
-        />
-      </div>
-      <div id="spreedly-cvv" style={{ height: "46px" }} />
-    </div>
-  )
+const PaymentElement = ({
+  paymentSession,
+}: {
+  paymentSession: PaymentSession
+}) => {
+  switch (paymentSession.provider_id) {
+    case "stripe":
+      return (
+        <div className="pt-8 pr-7">
+          <PaymentStripe />
+        </div>
+      )
+    case "manual":
+      return (
+        <div className="pt-8 pr-7">
+          <PaymentRye />
+        </div>
+      )
+    default:
+      return null
+  }
 }
 
 export default PaymentContainer

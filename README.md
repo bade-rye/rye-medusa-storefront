@@ -10,7 +10,8 @@ Navigate into your projects directory and get your environment variables ready:
 # Your Medusa backend, should be updated to where you are hosting your server. Remember to update CORS settings for your server. See – https://docs.medusajs.com/usage/configurations#storefront-cors
 NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
 NEXT_RYE_API_HEADER=http://localhost:9000
-NEXT_RYE_AUTH_HEADER="Basic {RYE_AUTH_TOKEN}" // can be found at https://console.rye.com
+NEXT_RYE_AUTH_HEADER="Basic ${TOKEN}"
+NEXT_PUBLIC_RYE_PAY_TOKEN="${TOKEN}"
 
 # Your store URL, should be updated to where you are hosting your storefront.
 NEXT_PUBLIC_BASE_URL=http://localhost:8000
@@ -32,7 +33,6 @@ NEXT_PUBLIC_INDEX_NAME=products
 
 # Your Next.js revalidation secret. See – https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#on-demand-revalidation
 REVALIDATE_SECRET=supersecret
-
 ```
 
 ### Install dependencies

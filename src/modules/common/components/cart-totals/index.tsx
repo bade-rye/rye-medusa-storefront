@@ -1,12 +1,14 @@
 import { Cart } from "@medusajs/medusa"
 import { formatAmount } from "medusa-react"
-import React from "react"
+import React, { useMemo } from "react"
+import { Cart as RyeCart } from "types/ryeGraphql"
 
 type CartTotalsProps = {
   cart: Omit<Cart, "refundable_amount" | "refunded_total">
+  ryeCart?: RyeCart
 }
 
-const CartTotals: React.FC<CartTotalsProps> = ({ cart }) => {
+const CartTotals: React.FC<CartTotalsProps> = ({ cart, ryeCart }) => {
   const {
     subtotal,
     discount_total,
@@ -15,6 +17,14 @@ const CartTotals: React.FC<CartTotalsProps> = ({ cart }) => {
     shipping_total,
     total,
   } = cart
+  console.log(tax_total)
+  const totalTax = useMemo(() => {
+    return (
+      (ryeCart?.stores?.reduce((acc, store) => {
+        return (acc += store.offer?.shippingMethods[0].taxes?.value ?? 0)
+      }, 0) ?? 0) + (tax_total ?? 0)
+    )
+  }, [ryeCart, tax_total])
 
   const getAmount = (amount: number | null | undefined) => {
     return formatAmount({
@@ -50,13 +60,13 @@ const CartTotals: React.FC<CartTotalsProps> = ({ cart }) => {
           </div>
           <div className="flex items-center justify-between">
             <span>Taxes</span>
-            <span>{getAmount(tax_total)}</span>
+            <span>{getAmount(totalTax)}</span>
           </div>
         </div>
         <div className="h-px w-full border-b border-gray-200 border-dashed my-4" />
         <div className="flex items-center justify-between text-base-regular text-gray-900 mb-2">
           <span>Total</span>
-          <span>{getAmount(total)}</span>
+          <span>{getAmount((total ?? 0) + totalTax)}</span>
         </div>
       </div>
     </div>

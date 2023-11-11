@@ -4,6 +4,11 @@ import Checkbox from "@modules/common/components/checkbox"
 import Spinner from "@modules/common/icons/spinner"
 import BillingAddress from "../billing_address"
 import ShippingAddress from "../shipping-address"
+import { useRyePay } from "@lib/context/ryepay-context"
+import { calculateTax, createShippingOption } from "@lib/data"
+import { useStore } from "@lib/context/store-context"
+import { useCart } from "medusa-react"
+import { useCallback, useState } from "react"
 
 const Addresses = () => {
   const {
@@ -13,6 +18,33 @@ const Addresses = () => {
     handleSubmit,
     cart,
   } = useCheckout()
+  const { getRegion } = useStore()
+
+  const { createCart } = useRyePay()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const onClick = useCallback(
+    async (e: React.MouseEvent) => {
+      setIsSubmitting(true)
+      const ryeCart = await createCart?.()
+      const shippingCost =
+        ryeCart?.stores?.reduce((acc, store) => {
+          return (acc += store.offer?.shippingMethods[0].price?.value ?? 0)
+        }, 0) ?? 0
+
+      const region = getRegion()
+
+      await Promise.all([
+        createShippingOption(region?.regionId ?? "", shippingCost),
+      ])
+
+      await handleSubmit(setAddresses)(e)
+
+      setIsSubmitting(false)
+    },
+    [createCart, getRegion, handleSubmit, setAddresses]
+  )
+
   return (
     <div className="bg-white">
       <div className="text-xl-semi flex items-center gap-x-4 px-8 pb-6 pt-8">
@@ -44,15 +76,16 @@ const Addresses = () => {
           )}
           <Button
             className="max-w-[200px] mt-6"
-            onClick={handleSubmit(setAddresses)}
+            onClick={onClick}
+            disabled={isSubmitting}
           >
-            Continue to delivery
+            {isSubmitting ? <Spinner /> : "Continue to delivery"}
           </Button>
         </div>
       ) : (
         <div>
           <div className="bg-gray-50 px-8 py-6 text-small-regular">
-            {cart && cart.shipping_address ? (
+            {cart && cart.shipping_address && !isSubmitting ? (
               <div className="flex items-start gap-x-8">
                 <div className="bg-green-400 rounded-full min-w-[24px] h-6 flex items-center justify-center text-white text-small-regular">
                   ✓

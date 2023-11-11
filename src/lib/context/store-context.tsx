@@ -26,6 +26,7 @@ interface LineInfoProps {
 interface StoreContext {
   countryCode: string | undefined
   setRegion: (regionId: string, countryCode: string) => void
+  getRegion: () => { regionId: string; countryCode: string } | null
   addItem: (item: VariantInfoProps) => void
   updateItem: (item: LineInfoProps) => void
   deleteItem: (lineId: string) => void
@@ -315,6 +316,7 @@ export const StoreProvider = ({ children }: StoreProps) => {
         deleteItem,
         updateItem,
         resetCart,
+        getRegion,
       }}
     >
       {children}

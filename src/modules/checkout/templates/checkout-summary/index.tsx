@@ -1,5 +1,6 @@
 "use client"
 
+import { useRyePay } from "@lib/context/ryepay-context"
 import DiscountCode from "@modules/checkout/components/discount-code"
 import GiftCard from "@modules/checkout/components/gift-card"
 import PaymentButton from "@modules/checkout/components/payment-button"
@@ -8,6 +9,7 @@ import { useCart } from "medusa-react"
 
 const CheckoutSummary = () => {
   const { cart } = useCart()
+  const { ryeCart } = useRyePay()
 
   if (!cart?.id) {
     return null
@@ -16,7 +18,7 @@ const CheckoutSummary = () => {
   return (
     <div className="sticky top-0 flex flex-col-reverse small:flex-col gap-y-8">
       <div className="w-full bg-white p-6 flex flex-col gap-y-6">
-        <CartTotals cart={cart} />
+        <CartTotals cart={cart} ryeCart={ryeCart} />
         <PaymentButton paymentSession={cart?.payment_session} />
       </div>
       <div className="p-6 bg-white">

@@ -6,6 +6,7 @@ import {
   ProductCollection,
 } from "@medusajs/medusa"
 import { PricedProduct } from "@medusajs/medusa/dist/types/pricing"
+import { BuyerIdentity, Cart } from "types/ryeGraphql"
 
 export type ProductCategoryWithChildren = Omit<
   ProductCategory,
@@ -423,11 +424,65 @@ export async function getProductsByCategoryHandle({
   }
 }
 
-export const createRyeCart = async (body: unknown) => {
-  const cart = await fetch(`${API_BASE_URL}/api/rye/carts/create`, {
+export const getRyeCart = async (id: string): Promise<Cart | undefined> => {
+  const cart = await fetch(`${API_BASE_URL}/api/rye/carts/${id}`).then((res) =>
+    res.json()
+  )
+
+  return cart
+}
+
+export const createRyeCart = async (body: {
+  buyerIdentity: BuyerIdentity
+  items: {
+    productId: string
+    quantity: number
+    marketplace: string
+  }[]
+}): Promise<Cart> => {
+  const cart = await fetch(`${API_BASE_URL}/api/rye/carts`, {
     method: "POST",
     body: JSON.stringify(body),
   }).then((res) => res.json())
 
   return cart
+}
+
+export const updateRyeCartBuyerIdentity = async (body: {
+  buyerIdentity: BuyerIdentity
+  cartId: string
+}): Promise<Cart> => {
+  const cart = await fetch(`${API_BASE_URL}/api/rye/carts/buyer-identity`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  }).then((res) => res.json())
+
+  return cart
+}
+
+export const createShippingOption = async (
+  region_id: string,
+  amount: number
+) => {
+  const res = await fetch(`${API_BASE_URL}/api/shipping-options`, {
+    method: "POST",
+    body: JSON.stringify({
+      name: "Default Shipping",
+      provider_id: "manual",
+      price_type: "flat_rate",
+      region_id,
+      amount,
+      data: {
+        id: "manual-fulfillment",
+      },
+    }),
+  }).then((res) => res.json())
+
+  return res.shipping_option
+}
+
+export const calculateTax = async (cartId: string) => {
+  const res = await medusaRequest("POST", `/carts/${cartId}/taxes`)
+
+  return res.body
 }

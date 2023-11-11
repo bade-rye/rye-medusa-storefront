@@ -4,14 +4,18 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
-  useRef,
   useState,
 } from "react"
 
 import { RyePay } from "@rye-api/rye-pay"
-import { createRyeCart } from "@lib/data"
+import {
+  createRyeCart,
+  getRyeCart,
+  updateRyeCartBuyerIdentity,
+} from "@lib/data"
 import { useCart } from "medusa-react"
+import { Cart, Country, Cart as RyeCart } from "types/ryeGraphql"
+import { useCheckout } from "./checkout-context"
 
 type RyePayProps = {
   children: React.ReactNode
@@ -23,9 +27,11 @@ type RyePayContext = {
   month: string
   year: string
   ryePay: RyePay
+  ryeCart?: Cart
   isSubmitting: boolean
   isPaymentCompleted: boolean
   initRyePayElements?: () => void
+  createCart?: () => Promise<RyeCart | undefined>
   submit?: () => Promise<void>
   setMonth?: React.Dispatch<React.SetStateAction<string>>
   setYear?: React.Dispatch<React.SetStateAction<string>>
@@ -55,11 +61,25 @@ export const useRyePay = () => {
  *
  */
 export const RyePayProvider = ({ children }: RyePayProps) => {
-  const { cart } = useCart()
+  const { cart, updateCart, setCart } = useCart()
+  const { getValues } = useCheckout()
   const [month, setMonth] = useState("")
+  const [ryeCart, setRyeCart] = useState<RyeCart | undefined>()
   const [year, setYear] = useState("")
   const [isPaymentCompleted, setPaymentCompleted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  /**
+   * Fetches the cart from Rye's api
+   */
+  const fetchRyeCart = useCallback(async () => {
+    const ryeCartId = localStorage.getItem("ryeCartId")
+    if (ryeCartId) {
+      const ryeCart = await getRyeCart(ryeCartId as string)
+
+      setRyeCart(ryeCart)
+    }
+  }, [])
 
   /**
    * Initializes RyePay elements
@@ -108,6 +128,10 @@ export const RyePayProvider = ({ children }: RyePayProps) => {
     })
   }, [])
 
+  useEffect(() => {
+    fetchRyeCart()
+  }, [fetchRyeCart])
+
   /**
    * Creates a cart using Rye's api
    */
@@ -116,29 +140,57 @@ export const RyePayProvider = ({ children }: RyePayProps) => {
       return
     }
 
-    const ryeCartItems = cart.items.map((item) => {
+    const ryeCartItems: {
+      productId: string
+      quantity: number
+      marketplace: string
+    }[] = cart.items.map((item) => {
       return {
-        productId: item.variant.metadata?.marketplaceId,
+        productId: item.variant.metadata?.marketplaceId as string,
         quantity: item.quantity,
-        marketplace: item.variant.metadata?.marketplace,
+        marketplace: item.variant.metadata?.marketplace as string,
       }
     })
+
+    const { shipping_address, email, billing_address } = getValues()
+
     const buyerIdentity = {
-      firstName: cart.shipping_address?.first_name,
-      lastName: cart.shipping_address?.last_name,
-      email: cart.email,
-      phone: cart.billing_address?.phone,
-      address1: cart.shipping_address?.address_1,
-      address2: cart.shipping_address?.address_2,
-      city: cart.shipping_address?.city,
-      provinceCode: cart.shipping_address?.province,
-      countryCode: cart.shipping_address?.country_code?.toUpperCase(),
-      postalCode: cart.shipping_address?.postal_code,
+      firstName:
+        cart.shipping_address?.first_name ?? shipping_address?.first_name,
+      lastName: cart.shipping_address?.last_name ?? shipping_address?.last_name,
+      email: cart.email ?? email,
+      phone: cart.shipping_address?.phone ?? shipping_address?.phone,
+      address1: cart.shipping_address?.address_1 ?? shipping_address?.address_1,
+      address2: cart.shipping_address?.address_2 ?? shipping_address?.address_2,
+      city: cart.shipping_address?.city ?? shipping_address?.city,
+      provinceCode:
+        cart.shipping_address?.province ?? shipping_address?.province,
+      countryCode:
+        (cart.shipping_address?.country_code?.toUpperCase() as Country) ??
+        (shipping_address?.country_code?.toUpperCase() as Country),
+      postalCode:
+        cart.shipping_address?.postal_code ?? shipping_address?.postal_code,
+    }
+    let updatedRyeCart
+
+    if (ryeCart) {
+      updatedRyeCart = await updateRyeCartBuyerIdentity({
+        buyerIdentity,
+        cartId: ryeCart.id,
+      })
+    } else {
+      updatedRyeCart = await createRyeCart({
+        items: ryeCartItems,
+        buyerIdentity,
+      })
     }
 
-    const ryeCart = await createRyeCart({ items: ryeCartItems, buyerIdentity })
-    return ryeCart
-  }, [cart])
+    setRyeCart(updatedRyeCart)
+
+    localStorage.setItem("ryeCartId", updatedRyeCart.id)
+
+    return updatedRyeCart
+  }, [cart, getValues, ryeCart])
 
   /**
    * Places the order using Rye's api
@@ -148,10 +200,13 @@ export const RyePayProvider = ({ children }: RyePayProps) => {
       return
     }
     setIsSubmitting(true)
-    const [ryeCart, response] = await Promise.all([
-      createCart(),
-      fetch("https://api.ipify.org?format=json").then((res) => res.json()),
-    ])
+    const response = await fetch("https://api.ipify.org?format=json").then(
+      (res) => res.json()
+    )
+
+    if (!ryeCart) {
+      return
+    }
 
     ryePay.submit({
       first_name: cart.shipping_address?.first_name ?? "",
@@ -166,12 +221,17 @@ export const RyePayProvider = ({ children }: RyePayProps) => {
       city: cart.shipping_address?.city ?? "",
       country: cart.shipping_address?.country_code?.toUpperCase() ?? "",
       state: cart.shipping_address?.province ?? "",
-      selectedShippingOptions: [
-        { store: "amazon", shippingId: "6.99-Default shipping method" },
-      ], // default shipping method rye uses,
+      selectedShippingOptions: ryeCart.stores.map((store) => {
+        return {
+          shippingId: store.offer?.shippingMethods[0].id ?? "",
+          store: store.store,
+        }
+      }),
       shopperIp: response.ip,
     })
-  }, [cart, createCart, month, year])
+
+    localStorage.removeItem("ryeCartId")
+  }, [cart, month, ryeCart, year])
 
   return (
     <RyePayContext.Provider
@@ -185,6 +245,8 @@ export const RyePayProvider = ({ children }: RyePayProps) => {
         isPaymentCompleted,
         submit,
         initRyePayElements,
+        createCart,
+        ryeCart,
       }}
     >
       {children}

@@ -17,7 +17,8 @@ const CartTotals: React.FC<CartTotalsProps> = ({ cart, ryeCart }) => {
     shipping_total,
     total,
   } = cart
-  console.log(tax_total)
+
+  // Calculate tax total from Rye
   const totalTax = useMemo(() => {
     return (
       (ryeCart?.stores?.reduce((acc, store) => {

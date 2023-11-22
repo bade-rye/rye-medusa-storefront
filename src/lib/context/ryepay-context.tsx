@@ -87,7 +87,7 @@ export const RyePayProvider = ({ children }: RyePayProps) => {
   const initRyePayElements = useCallback(() => {
     ryePay.init({
       apiKey: window
-        .atob(process.env.NEXT_PUBLIC_RYE_PAY_TOKEN ?? "")
+        .atob(process.env.NEXT_PUBLIC_RYE_AUTH_TOKEN ?? "")
         .replaceAll(":", ""),
       numberEl: "spreedly-number",
       cvvEl: "spreedly-cvv",

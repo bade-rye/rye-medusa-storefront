@@ -11,7 +11,7 @@ Navigate into your projects directory and get your environment variables ready:
 NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
 NEXT_RYE_API_HEADER=http://localhost:9000
 NEXT_RYE_AUTH_HEADER="Basic ${TOKEN}"
-NEXT_PUBLIC_RYE_PAY_TOKEN="${TOKEN}"
+NEXT_PUBLIC_RYE_AUTH_TOKEN="${TOKEN}"
 
 # Your store URL, should be updated to where you are hosting your storefront.
 NEXT_PUBLIC_BASE_URL=http://localhost:8000
